@@ -16,15 +16,18 @@
         @ionChange="onSearchChange">
       </ion-searchbar>
       <ion-list>
-        <ion-item
-          v-for="contact in contacts"
-          :key="contact.id"
-          @click="onItemClick(contact.id)"
-        >
-          <ion-label>
-            {{ contact.name }} <br/> <small>{{ contact.companyName }}</small>
-          </ion-label>
-        </ion-item>
+        <ion-item-sliding v-for="contact in contacts" :key="contact.id">
+          <ion-item @click="onItemClick(contact.id)">
+            <ion-label>
+              {{ contact.name }} <br/> <small>{{ contact.companyName }}</small>
+            </ion-label>
+          </ion-item>
+          <ion-item-options side="end">
+            <ion-item-option color="danger" expandable @click="onDeleteClick(contact.id)">
+              Delete
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
       </ion-list>
 
       <ion-infinite-scroll
@@ -67,6 +70,9 @@ import {
   IonFab,
   IonFabButton,
   IonIcon,
+  IonItemSliding,
+  IonItemOptions,
+  IonItemOption,
   useIonRouter,
 } from '@ionic/vue';
 import { useManager } from '../../database';
@@ -91,6 +97,9 @@ export default defineComponent({
     IonFab,
     IonFabButton,
     IonIcon,
+    IonItemSliding,
+    IonItemOptions,
+    IonItemOption,
   },
   setup() {
     const limit = 50;
@@ -131,7 +140,15 @@ export default defineComponent({
       router.push({name: 'newContact'})
     }
 
-    onBeforeUpdate(() => onSearchChange())
+    const onDeleteClick = async(id: string) => {
+      await dataSource.destroy(id);
+      onSearchChange();
+    }
+
+
+    onBeforeUpdate(() => {
+      onSearchChange();
+    })
 
 
     return {
@@ -142,7 +159,8 @@ export default defineComponent({
       onInfinite,
       onSearchChange,
       onItemClick,
-      onCreateClick
+      onCreateClick,
+      onDeleteClick
     }
   }
 });

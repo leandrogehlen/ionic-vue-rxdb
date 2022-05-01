@@ -2,7 +2,7 @@ import { replicateRxCollection, RxReplicationStateBase } from 'rxdb/plugins/repl
 import { assign, keys, pickBy } from 'lodash';
 import { RxCollection } from 'rxdb';
 import { DateTime } from 'luxon';
-import { v4 } from 'uuid';
+import { v4, validate } from 'uuid';
 
 
 export class DataSource {
@@ -47,15 +47,15 @@ export class DataSource {
   }
 
   async save(key: string, data: any) {
-    if (key === null) {
+    if (key) {
+      const document = await this._collection.findOne(key).exec();
+      await document.atomicUpdate((doc: any) => assign(doc, data));
+    } else {
       const primaryKey = this._collection.schema.primaryPath as string;
       await this._collection.insert({
         ...{[primaryKey]: v4()},
         ...data
       });
-    } else {
-      const document = await this._collection.findOne(key).exec();
-      await document.atomicUpdate((doc: any) => assign(doc, data));
     }
   }
 
@@ -87,13 +87,17 @@ export class DataSource {
     const baseUrl = this._options.baseUrl;
 
     for (const doc of documents) {
-      await fetch(`${baseUrl}/${doc.id}`, {
-        method: 'PUT',
+      const isNew = validate(doc.id);
+      const url = isNew ? baseUrl : `${baseUrl}/${doc.id}`;
+      const method = doc._deleted ? 'DELETE' : isNew ? 'POST' : 'PUT';
+
+      await fetch(url, {
+        method: method,
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(doc)
+        body: JSON.stringify(this._toPlainObject(doc))
       });
     }
   }

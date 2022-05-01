@@ -26,7 +26,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, onBeforeUpdate, ref } from 'vue';
 import {
   IonButtons,
   IonContent,
@@ -66,18 +66,14 @@ export default defineComponent({
     const data = ref<any>({});
     const dataSource = useManager().get(database => database.collections.contacts);
 
-    const loadData = async() => {
-      data.value = await dataSource.findOne(route.params.id as string);
-    };
-
     const onSaveClick = async() => {
       await dataSource.save(data.value.id, data.value);
       router.push({name: 'contacts'});
     }
 
-    if (route.params.id) {
-      loadData();
-    }
+    onBeforeUpdate(async() => {
+      data.value ? await dataSource.findOne(route.params.id as string): {};
+    });
 
     return {
       data,
