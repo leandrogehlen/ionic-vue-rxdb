@@ -21,6 +21,11 @@ export class DataSource {
     this._fieldNames = keys(collection.schema.jsonSchema.properties);
   }
 
+  async findOne(key: string): Promise<any> {
+    const document = await this._collection.findOne(key).exec();
+    return this._toPlainObject(document);
+  }
+
   async findAll(options: any = {}): Promise<any[]> {
     const condition = options.searchValue ? {
       selector: {

@@ -16,8 +16,14 @@
         @ionChange="onSearchChange">
       </ion-searchbar>
       <ion-list>
-        <ion-item v-for="contact in contacts" :key="contact.id">
-          <ion-label>{{ contact.name }}</ion-label>
+        <ion-item
+          v-for="contact in contacts"
+          :key="contact.id"
+          @click="onItemClick(contact.id)"
+        >
+          <ion-label>
+            {{ contact.name }} <br/> <small>{{ contact.companyName }}</small>
+          </ion-label>
         </ion-item>
       </ion-list>
 
@@ -31,12 +37,18 @@
           loading-text="Loading more data...">
         </ion-infinite-scroll-content>
       </ion-infinite-scroll>
+
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="onCreateClick">
+          <ion-icon :md="add"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref } from 'vue';
+import { computed, defineComponent, onBeforeUpdate, ref } from 'vue';
 import {
   IonButtons,
   IonContent,
@@ -51,12 +63,17 @@ import {
   IonItem,
   IonLabel,
   InfiniteScrollCustomEvent,
-  IonSearchbar
+  IonSearchbar,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  useIonRouter,
 } from '@ionic/vue';
 import { useManager } from '../../database';
+import { add } from 'ionicons/icons';
 
 export default defineComponent({
-  name: 'FolderPage',
+  name: 'ContactIndex',
   components: {
     IonButtons,
     IonContent,
@@ -70,7 +87,10 @@ export default defineComponent({
     IonList,
     IonItem,
     IonLabel,
-    IonSearchbar
+    IonSearchbar,
+    IonFab,
+    IonFabButton,
+    IonIcon,
   },
   setup() {
     const limit = 50;
@@ -78,8 +98,11 @@ export default defineComponent({
     const searchValue = ref();
     const isDisabled = computed(() => contacts.value.length % limit !== 0);
 
+    const router = useIonRouter();
     const manager = useManager();
+
     const dataSource = manager.get(database => database.collections.contacts);
+    dataSource.start();
 
     const loadContacts = async () => {
       const items = await dataSource.findAll({
@@ -100,15 +123,26 @@ export default defineComponent({
       e.target.complete();
     }
 
-    dataSource.start();
-    loadContacts();
+    const onItemClick = (id: any) => {
+      router.push({name: 'editContact', params: {id: id}})
+    }
+
+    const onCreateClick = () => {
+      router.push({name: 'newContact'})
+    }
+
+    onBeforeUpdate(() => onSearchChange())
+
 
     return {
+      add,
       contacts,
       isDisabled,
       searchValue,
       onInfinite,
-      onSearchChange
+      onSearchChange,
+      onItemClick,
+      onCreateClick
     }
   }
 });

@@ -11,6 +11,15 @@ const routes: Array<RouteRecordRaw> = [
     name: 'contacts',
     component: () => import ('../views/contacts/Index.vue')
   },
+  {
+    path: '/contacts/:id',
+    name: 'editContact',
+    component: () => import ('../views/contacts/Form.vue')
+  },{
+    path: '/contacts/new',
+    name: 'newContact',
+    component: () => import ('../views/contacts/Form.vue')
+  }
 ]
 
 const router = createRouter({
