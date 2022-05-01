@@ -8,8 +8,9 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/contacts',
-    component: () => import ('../views/ConctactPage.vue')
-  }
+    name: 'contacts',
+    component: () => import ('../views/contacts/Index.vue')
+  },
 ]
 
 const router = createRouter({

@@ -43,10 +43,13 @@ import {
   IonNote,
   IonRouterOutlet,
   IonSplitPane,
+  loadingController,
 } from '@ionic/vue';
 import { defineComponent, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { personOutline } from 'ionicons/icons';
+import { Storage } from '@capacitor/storage';
+import { useManager } from './database';
 
 export default defineComponent({
   name: 'App',
@@ -65,6 +68,7 @@ export default defineComponent({
     IonSplitPane,
   },
   setup() {
+    const manager = useManager();
     const route = useRoute();
     const selectedIndex = ref(0);
     const appPages = [
@@ -75,12 +79,21 @@ export default defineComponent({
         mdIcon: personOutline
       }
     ];
-    const labels = ['Family', 'Friends', 'Notes', 'Work', 'Travel', 'Reminders'];
+
+    loadingController.create({ message: 'Please wait...'})
+      .then(async(loading) => {
+        await loading.present();
+
+        const { value } = await Storage.get({ key: 'isSyncComplete' });
+        await manager.start(value === null);
+
+        await Storage.set({ key: 'isSyncComplete', value: '1'});
+        await loading.dismiss();
+      });
 
     return {
       selectedIndex,
       appPages,
-      labels,
       personOutline,
       isSelected: (url: string) => url === route.path ? 'selected' : ''
     }

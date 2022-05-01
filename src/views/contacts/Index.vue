@@ -53,8 +53,7 @@ import {
   InfiniteScrollCustomEvent,
   IonSearchbar
 } from '@ionic/vue';
-import { useDatabase } from '../database';
-import { DataSource } from '../data/DataSource';
+import { useManager } from '../../database';
 
 export default defineComponent({
   name: 'FolderPage',
@@ -76,17 +75,11 @@ export default defineComponent({
   setup() {
     const limit = 50;
     const contacts = ref([]);
-    const database = useDatabase();
     const searchValue = ref();
     const isDisabled = computed(() => contacts.value.length % limit !== 0);
 
-    const dataSource = new DataSource(database.contacts, {
-      baseUrl: 'http://192.168.0.109:3000/contacts'
-    });
-
-    database.contacts.findOne()
-      .exec()
-      .then((contact: any) => dataSource.start(!contact));
+    const manager = useManager();
+    const dataSource = manager.get(database => database.collections.contacts);
 
     const loadContacts = async () => {
       const items = await dataSource.findAll({
@@ -107,6 +100,7 @@ export default defineComponent({
       e.target.complete();
     }
 
+    dataSource.start();
     loadContacts();
 
     return {

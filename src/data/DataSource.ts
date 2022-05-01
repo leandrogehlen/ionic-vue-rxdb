@@ -1,5 +1,5 @@
 import { replicateRxCollection, RxReplicationStateBase } from 'rxdb/plugins/replication';
-import { assign, keys, pick } from 'lodash';
+import { assign, keys, pickBy } from 'lodash';
 import { RxCollection } from 'rxdb';
 import { DateTime } from 'luxon';
 import { v4 } from 'uuid';
@@ -7,12 +7,13 @@ import { v4 } from 'uuid';
 
 export class DataSource {
 
-  _options: any;
-  _replicator: RxReplicationStateBase<any>;
   _currentPage = 1;
+  _options: any;
+  _fieldNames: string[];
+  _replicator: RxReplicationStateBase<any>;
   _collection: RxCollection;
   _syncEndTime: DateTime;
-  _fieldNames: string[];
+
 
   constructor(collection: RxCollection, options: any) {
     this._options = options || {};
@@ -37,7 +38,7 @@ export class DataSource {
     });
 
     const results = await query.exec();
-    return this._mapData(results);
+    return results.map(result => this._toPlainObject(result));
   }
 
   async save(key: string, data: any) {
@@ -58,7 +59,7 @@ export class DataSource {
     await document.remove();
   }
 
-  async start(awaitInit = true) {
+  async start(awaitInit = true): Promise<void> {
     try {
       if (!this._replicator) {
         this._replicator = await this._createReplicator();
@@ -73,7 +74,11 @@ export class DataSource {
     }
   }
 
-  async push(documents: any[]) {
+  async stop(): Promise<any> {
+    return this._replicator.cancel();
+  }
+
+  async push(documents: any[]): Promise<void> {
     const baseUrl = this._options.baseUrl;
 
     for (const doc of documents) {
@@ -88,7 +93,7 @@ export class DataSource {
     }
   }
 
-  async pull(lastDoc: any) {
+  async pull(lastDoc: any): Promise<any> {
     const baseUrl = this._options.baseUrl;
     const limit = this._options.limit || 100;
     let lastUpdateAt: any = lastDoc ? DateTime.fromMillis(lastDoc.updatedAt) : null;
@@ -99,7 +104,6 @@ export class DataSource {
       }
       lastUpdateAt = lastUpdateAt.toUTC().toMillis();
     }
-
 
     const url = this.isSyncing()
       ? `${baseUrl}?_page=${this._currentPage}&_limit=${limit}`
@@ -145,10 +149,10 @@ export class DataSource {
     return `${this._collection.name}:${this._options.baseUrl}`;
   }
 
-  _mapData(data: any): any {
-    return Array.isArray(data)
-      ? data.map(item => pick(item, this._fieldNames))
-      : pick(data, this._fieldNames);
+  _toPlainObject(data: any): any {
+    return pickBy(data,
+      (value, key) => this._fieldNames.includes(key) && !key.startsWith('_')
+    );
   }
 
 }
