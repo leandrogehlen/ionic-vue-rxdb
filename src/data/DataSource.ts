@@ -7,8 +7,8 @@ import { v4, validate } from 'uuid';
 
 export class DataSource {
 
-
   _options: any;
+  _currentPage = 1;
   _fieldNames: string[];
   _replicator: RxReplicationStateBase<any>;
   _collection: RxCollection;
@@ -65,16 +65,17 @@ export class DataSource {
   }
 
   async start(awaitInit = true): Promise<void> {
-    try {
-      if (!this._replicator) {
-        this._replicator = await this._createReplicator();
-      }
+    if (!this._replicator) {
+      this._replicator = await this._createReplicator();
+    } else if (!this._replicator.isStopped()) {
+      return;
+    }
 
-      if (awaitInit) {
-        this._replicator.awaitInitialReplication();
-        await this._replicator.awaitInSync();
-      }
-    } finally {
+    if (awaitInit) {
+      this._currentPage = 1;
+      this._syncEndTime = null;
+      this._replicator.awaitInitialReplication();
+      await this._replicator.awaitInSync();
       this._syncEndTime = DateTime.now();
     }
   }
@@ -106,9 +107,10 @@ export class DataSource {
     const documents = [];
     const baseUrl = this._options.baseUrl;
     const limit = this._options.limit || 100;
+    const batchSize = this._options.batchSize || 1000;
+    const isSync = this.isSyncing();
 
     let data;
-    let page = 1;
     let lastUpdateAt = last ? DateTime.fromMillis(last.updatedAt) : null;
 
     if (this._syncEndTime >= lastUpdateAt) {
@@ -118,17 +120,21 @@ export class DataSource {
     do {
       const url = last
         ? `${baseUrl}?updatedAt_gte=${lastUpdateAt.toMillis()}`
-        : `${baseUrl}?_page=${page}&_limit=${limit}`
+        : `${baseUrl}?_page=${this._currentPage}&_limit=${limit}`
 
       const response = await fetch(url);
       data = await response.json();
       documents.push(...data);
-      page++;
-    } while (data.length == limit && !lastUpdateAt);
+
+      if (isSync) {
+        this._currentPage++;
+      }
+
+    } while (documents.length < batchSize && data.length == limit && isSync);
 
     return {
       documents: documents,
-      hasMoreDocuments: documents.length !== 0 && documents.length === limit
+      hasMoreDocuments: data.length === limit
     };
   }
 
