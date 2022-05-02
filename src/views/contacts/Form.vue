@@ -72,7 +72,9 @@ export default defineComponent({
     }
 
     onBeforeUpdate(async() => {
-      data.value ? await dataSource.findOne(route.params.id as string): {};
+      data.value =  route.params.id
+        ? await dataSource.findOne(route.params.id as string)
+        : {};
     });
 
     return {
