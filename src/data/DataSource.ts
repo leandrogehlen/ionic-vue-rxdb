@@ -7,7 +7,7 @@ import { v4, validate } from 'uuid';
 
 export class DataSource {
 
-  _currentPage = 1;
+
   _options: any;
   _fieldNames: string[];
   _replicator: RxReplicationStateBase<any>;
@@ -102,29 +102,33 @@ export class DataSource {
     }
   }
 
-  async pull(lastDoc: any): Promise<any> {
+  async pull(last: any): Promise<any> {
+    const documents = [];
     const baseUrl = this._options.baseUrl;
     const limit = this._options.limit || 100;
-    let lastUpdateAt: any = lastDoc ? DateTime.fromMillis(lastDoc.updatedAt) : null;
 
-    if (!this.isSyncing()) {
-      if (lastUpdateAt && lastUpdateAt <= this._syncEndTime) {
-        lastUpdateAt = this._syncEndTime;
-      }
-      lastUpdateAt = lastUpdateAt.toUTC().toMillis();
+    let data;
+    let page = 1;
+    let lastUpdateAt = last ? DateTime.fromMillis(last.updatedAt) : null;
+
+    if (this._syncEndTime >= lastUpdateAt) {
+      lastUpdateAt = this._syncEndTime;
     }
 
-    const url = this.isSyncing()
-      ? `${baseUrl}?_page=${this._currentPage}&_limit=${limit}`
-      : `${baseUrl}?updatedAt_gte=${lastUpdateAt}`;
+    do {
+      const url = last
+        ? `${baseUrl}?updatedAt_gte=${lastUpdateAt.toMillis()}`
+        : `${baseUrl}?_page=${page}&_limit=${limit}`
 
-    const response = await fetch(url);
-    const data = await response.json();
-    this._currentPage++;
+      const response = await fetch(url);
+      data = await response.json();
+      documents.push(...data);
+      page++;
+    } while (data.length == limit && !lastUpdateAt);
 
     return {
-      documents: data,
-      hasMoreDocuments: data.length === limit
+      documents: documents,
+      hasMoreDocuments: documents.length !== 0 && documents.length === limit
     };
   }
 

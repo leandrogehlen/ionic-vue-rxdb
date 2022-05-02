@@ -111,9 +111,7 @@ export default defineComponent({
 
     const router = useIonRouter();
     const manager = useManager();
-
     const dataSource = manager.get(database => database.collections.contacts);
-    dataSource.start();
 
     const loadData = async () => {
       const items = await dataSource.findAll({
