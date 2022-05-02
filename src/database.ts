@@ -42,7 +42,7 @@ export async function createDatabase(): Promise<Plugin> {
   });
 
   const host = process.env.VUE_APP_HOST || 'localhost';
-  const port = process.env.VUE_APP_HOST || '3000';
+  const port = process.env.VUE_APP_PORT || '3000';
 
   const manager = new Manager(database);
   manager.add(database.collections.contacts, {
