@@ -16,7 +16,7 @@
         @ionChange="onSearchChange">
       </ion-searchbar>
       <ion-list>
-        <ion-item-sliding v-for="contact in contacts" :key="contact.id">
+        <ion-item-sliding v-for="contact in data" :key="contact.id">
           <ion-item @click="onItemClick(contact.id)">
             <ion-label>
               {{ contact.name }} <br/> <small>{{ contact.companyName }}</small>
@@ -52,6 +52,8 @@
 
 <script lang="ts">
 import { computed, defineComponent, onBeforeUpdate, ref } from 'vue';
+import { remove } from 'lodash';
+import { add } from 'ionicons/icons';
 import {
   IonButtons,
   IonContent,
@@ -76,7 +78,6 @@ import {
   useIonRouter,
 } from '@ionic/vue';
 import { useManager } from '../../database';
-import { add } from 'ionicons/icons';
 
 export default defineComponent({
   name: 'ContactIndex',
@@ -103,9 +104,10 @@ export default defineComponent({
   },
   setup() {
     const limit = 50;
-    const contacts = ref([]);
+    const count = ref(0);
+    const data = ref([]);
     const searchValue = ref();
-    const isDisabled = computed(() => contacts.value.length % limit !== 0);
+    const isDisabled = computed(() => count.value % limit !== 0);
 
     const router = useIonRouter();
     const manager = useManager();
@@ -113,22 +115,24 @@ export default defineComponent({
     const dataSource = manager.get(database => database.collections.contacts);
     dataSource.start();
 
-    const loadContacts = async () => {
+    const loadData = async () => {
       const items = await dataSource.findAll({
         searchValue: searchValue.value,
-        skip: contacts.value.length,
+        skip: data.value.length,
         limit: limit
       });
-      contacts.value.push(...items);
+
+      count.value = items.length;
+      data.value.push(...items);
     }
 
     const onSearchChange = () => {
-      contacts.value = [];
-      loadContacts();
+      data.value = [];
+      loadData();
     }
 
     const onInfinite = async(e: InfiniteScrollCustomEvent) => {
-      await loadContacts();
+      await loadData();
       e.target.complete();
     }
 
@@ -142,9 +146,8 @@ export default defineComponent({
 
     const onDeleteClick = async(id: string) => {
       await dataSource.destroy(id);
-      onSearchChange();
+      remove(data.value, {id: id});
     }
-
 
     onBeforeUpdate(() => {
       onSearchChange();
@@ -153,7 +156,7 @@ export default defineComponent({
 
     return {
       add,
-      contacts,
+      data,
       isDisabled,
       searchValue,
       onInfinite,
