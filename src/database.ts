@@ -41,11 +41,12 @@ export async function createDatabase(): Promise<Plugin> {
     }
   });
 
-
+  const host = process.env.VUE_APP_HOST || 'localhost';
+  const port = process.env.VUE_APP_HOST || '3000';
 
   const manager = new Manager(database);
   manager.add(database.collections.contacts, {
-    baseUrl: 'http://192.168.0.109:3000/contacts'
+    baseUrl: `http://${host}:${port}/contacts`
   });
 
   return {
