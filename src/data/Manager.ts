@@ -7,8 +7,7 @@ export class Manager {
   private _instances = new Map<RxCollection, DataSource>();
 
   constructor(database: RxDatabase) {
-    this._database = database;
-    database.collections
+    this._database = database;    
   }
 
   public add(collection: RxCollection, options: any): this {
