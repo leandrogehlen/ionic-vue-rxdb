@@ -14,7 +14,6 @@ export class DataSource {
   _collection: RxCollection;
   _syncEndTime: DateTime;
 
-
   constructor(collection: RxCollection, options: any) {
     this._options = options || {};
     this._collection = collection;
@@ -74,8 +73,7 @@ export class DataSource {
     if (awaitInit) {
       this._currentPage = 1;
       this._syncEndTime = null;
-      this._replicator.awaitInitialReplication();
-      await this._replicator.awaitInSync();
+      await this._replicator.awaitInitialReplication();
       this._syncEndTime = DateTime.now();
     }
   }
