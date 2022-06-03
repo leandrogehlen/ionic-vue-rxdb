@@ -77,7 +77,7 @@ import {
   IonItemOption,
   useIonRouter,
 } from '@ionic/vue';
-import { useManager } from '../../database';
+import { useDataSource } from '../../database';
 
 export default defineComponent({
   name: 'ContactIndex',
@@ -110,8 +110,7 @@ export default defineComponent({
     const isDisabled = computed(() => count.value % limit !== 0);
 
     const router = useIonRouter();
-    const manager = useManager();
-    const dataSource = manager.get(database => database.collections.contacts);
+    const dataSource = useDataSource(database => database.collections.contacts);
 
     const loadData = async () => {
       const items = await dataSource.findAll({

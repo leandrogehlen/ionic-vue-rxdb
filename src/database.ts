@@ -1,9 +1,10 @@
 import { inject, Plugin } from 'vue';
-import { createRxDatabase } from 'rxdb';
+import { createRxDatabase, RxCollection, RxDatabase } from 'rxdb';
 import { getRxStorageDexie } from 'rxdb/plugins/dexie';
 import { isPlatform } from '@ionic/vue';
 import { Manager } from './data/Manager';
 import contactSchema from './schemas/contact';
+import { DataSource } from './data/DataSource';
 
 const KEY_DATABASE = Symbol('database');
 const KEY_MANAGER = Symbol('manager');
@@ -22,6 +23,10 @@ export function useDatabase(): any {
 
 export function useManager(): Manager {
   return inject(KEY_MANAGER);
+}
+
+export function useDataSource(finder: (database: RxDatabase) => RxCollection): DataSource {
+  return useManager().get(finder);
 }
 
 export async function createDatabase(): Promise<Plugin> {

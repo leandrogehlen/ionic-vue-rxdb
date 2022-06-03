@@ -42,7 +42,7 @@ import {
   IonButton
 } from '@ionic/vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useManager } from '../../database';
+import { useDataSource } from '../../database';
 
 export default defineComponent({
   name: 'ContactForm',
@@ -64,7 +64,7 @@ export default defineComponent({
     const route = useRoute();
     const router = useRouter();
     const data = ref<any>({});
-    const dataSource = useManager().get(database => database.collections.contacts);
+    const dataSource = useDataSource(database => database.collections.contacts);
 
     const onSaveClick = async() => {
       await dataSource.save(data.value.id, data.value);
