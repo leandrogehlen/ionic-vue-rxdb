@@ -1,6 +1,6 @@
 {
 	"appId": "io.ionic.starter",
-	"appName": "ionic-offline",
+	"appName": "ionic-vue-rxdb",
 	"webDir": "dist",
 	"bundledWebRuntime": false
 }

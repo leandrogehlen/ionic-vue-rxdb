@@ -1,12 +1,12 @@
 {
-  "name": "ionic-offline",
+  "name": "ionic-vue-rxdb",
   "version": "0.0.1",
   "private": true,
   "description": "Offline fist ionic project",
   "scripts": {
     "serve": "npm-run-all --parallel serve:json serve:app",
     "serve:app": "vue-cli-service serve",
-    "serve:json": "json-server --watch db.json",
+    "serve:json": "json-server --port 0.0.0.0 --watch db.json",
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",
