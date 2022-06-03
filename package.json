@@ -6,7 +6,7 @@
   "scripts": {
     "serve": "npm-run-all --parallel serve:json serve:app",
     "serve:app": "vue-cli-service serve",
-    "serve:json": "json-server --port 0.0.0.0 --watch db.json",
+    "serve:json": "json-server --host 0.0.0.0 --watch db.json",
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
     "test:e2e": "vue-cli-service test:e2e",

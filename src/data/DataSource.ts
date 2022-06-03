@@ -64,13 +64,13 @@ export class DataSource {
   }
 
   async start(awaitInit = true): Promise<void> {
-    if (!this._replicator) {
+    const created = !!this._replicator;
+
+    if (!created) {
       this._replicator = await this._createReplicator();
-    } else if (!this._replicator.isStopped()) {
-      return;
     }
 
-    if (awaitInit) {
+    if ((!created || this._replicator.isStopped()) && awaitInit) {
       this._currentPage = 1;
       this._syncEndTime = null;
       await this._replicator.awaitInitialReplication();
