@@ -19,6 +19,19 @@ const routes: Array<RouteRecordRaw> = [
     path: '/contacts/new',
     name: 'newContact',
     component: () => import ('../views/contacts/Form.vue')
+  },{
+    path: '/categories',
+    name: 'categories',
+    component: () => import ('../views/categories/Index.vue')
+  },
+  {
+    path: '/categories/:id',
+    name: 'editCategory',
+    component: () => import ('../views/categories/Form.vue')
+  },{
+    path: '/categories/new',
+    name: 'newCategory',
+    component: () => import ('../views/categories/Form.vue')
   }
 ]
 

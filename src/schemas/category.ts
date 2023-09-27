@@ -1,6 +1,6 @@
 export default {
   version: 0,
-  description: "Contact schema",
+  description: "Category schema",
   primaryKey: "id",
   type: "object",
   properties: {
@@ -10,15 +10,6 @@ export default {
     },
     name: {
       type: "string"
-    },
-    company_name: {
-      type: "string"
-    },
-    emails: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
+    }
   }
 }

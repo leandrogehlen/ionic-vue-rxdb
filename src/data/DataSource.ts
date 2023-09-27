@@ -1,4 +1,4 @@
-import { replicateRxCollection, RxReplicationStateBase } from 'rxdb/plugins/replication';
+import { replicateRxCollection, RxReplicationState } from 'rxdb/plugins/replication';
 import { assign, keys, pickBy } from 'lodash';
 import { RxCollection } from 'rxdb';
 import { DateTime } from 'luxon';
@@ -10,7 +10,7 @@ export class DataSource {
   _options: any;
   _currentPage = 1;
   _fieldNames: string[];
-  _replicator: RxReplicationStateBase<any>;
+  _replicator: RxReplicationState<any, any>;
   _collection: RxCollection;
   _syncEndTime: DateTime;
 
@@ -147,7 +147,6 @@ export class DataSource {
       collection: this._collection,
       replicationIdentifier: this._createReplicationIdentifier(),
       live: true,
-      liveInterval: 10000,
       pull: {
         async handler(lastDoc) {
           return self.pull(lastDoc);
@@ -156,7 +155,8 @@ export class DataSource {
       push: {
         async handler(document) {
           console.log('pushing', document);
-          return self.push(document);
+          await self.push(document);
+          return [];
         }
       },
     });

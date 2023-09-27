@@ -1,15 +1,16 @@
 import { inject, Plugin } from 'vue';
-import { createRxDatabase, RxCollection, RxDatabase } from 'rxdb';
-import { getRxStorageDexie } from 'rxdb/plugins/dexie';
+import { createRxDatabase, addRxPlugin } from 'rxdb';
+import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
+import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { isPlatform } from '@ionic/vue';
-import { Manager } from './data/Manager';
 import contactSchema from './schemas/contact';
-import { DataSource } from './data/DataSource';
+import categorySchema from './schemas/category';
+
+addRxPlugin(RxDBLeaderElectionPlugin);
 
 const KEY_DATABASE = Symbol('database');
-const KEY_MANAGER = Symbol('manager');
 
-function isDeviceReady(): Promise<void> {
+function awaitDeviceIsReady(): Promise<void> {
   return new Promise(resolve => {
     document.addEventListener('deviceready', () => {
       resolve();
@@ -21,18 +22,10 @@ export function useDatabase(): any {
   return inject(KEY_DATABASE);
 }
 
-export function useManager(): Manager {
-  return inject(KEY_MANAGER);
-}
-
-export function useDataSource(finder: (database: RxDatabase) => RxCollection): DataSource {
-  return useManager().get(finder);
-}
-
 export async function createDatabase(): Promise<Plugin> {
 
   if (isPlatform('mobile')) {
-    await isDeviceReady();
+    await awaitDeviceIsReady();
   }
 
   const database = await createRxDatabase({
@@ -43,21 +36,16 @@ export async function createDatabase(): Promise<Plugin> {
   await database.addCollections({
     contacts: {
       schema: contactSchema
+    },
+    categories: {
+      schema: categorySchema
     }
   });
 
-  const host = process.env.VUE_APP_HOST || 'localhost';
-  const port = process.env.VUE_APP_PORT || '3000';
-
-  const manager = new Manager(database);
-  manager.add(database.collections.contacts, {
-    baseUrl: `http://${host}:${port}/contacts`
-  });
 
   return {
     install(app: any) {
       app.provide(KEY_DATABASE, database);
-      app.provide(KEY_MANAGER, manager);
     }
   };
 }

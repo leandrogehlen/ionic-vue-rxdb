@@ -1,86 +1,51 @@
 <template>
-  <ion-page>
-    <ion-header :translucent="true">
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-menu-button color="primary"></ion-menu-button>
-        </ion-buttons>
-        <ion-title>Contact details</ion-title>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content :fullscreen="true">
-      <ion-list>
-        <ion-item>
-          <ion-label position="floating">Name</ion-label>
-          <ion-input v-model="data.name"></ion-input>
-        </ion-item>
-        <ion-item>
-          <ion-label position="floating">Company Name</ion-label>
-          <ion-input v-model="data.companyName"></ion-input>
-        </ion-item>
-      </ion-list>
-      <ion-button expand="block" color="primary" @click="onSaveClick">Save</ion-button>
-    </ion-content>
-  </ion-page>
+  <PageForm
+    title="Contacts"
+    :collection="database.collections.contacts"
+    @loaded="onLoaded"
+    @saving="onSaving"
+    @saved="router.push({name: 'contacts'})"
+  >
+    <template #items="{ data }">
+      <ion-item>
+        <ion-input
+          label="Name"
+          labelPlacement="stacked"
+          v-model="data.name">
+        </ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-input
+          label="Company Name"
+          labelPlacement="stacked"
+          v-model="data.company_name"
+        ></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-input
+          label="E-mails"
+          labelPlacement="stacked"
+          v-model="data.emails"
+        ></ion-input>
+      </ion-item>
+    </template>
+  </PageForm>
 </template>
+<script setup lang="ts">
+import { IonInput, IonItem } from '@ionic/vue';
+import { useRouter } from 'vue-router';
+import { useDatabase } from '../../database';
+import PageForm from '../../components/PageForm.vue';
 
-<script lang="ts">
-import { defineComponent, onBeforeUpdate, ref } from 'vue';
-import {
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonInput,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonButton
-} from '@ionic/vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useDataSource } from '../../database';
+const database = useDatabase();
+const router = useRouter();
 
-export default defineComponent({
-  name: 'ContactForm',
-  components: {
-    IonButtons,
-    IonContent,
-    IonHeader,
-    IonMenuButton,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    IonInput,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonButton
-  },
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-    const data = ref<any>({});
-    const dataSource = useDataSource(database => database.collections.contacts);
+const onLoaded = (data: any) => {
+  data.emails = data.emails?.join(',');
+}
 
-    const onSaveClick = async() => {
-      await dataSource.save(data.value.id, data.value);
-      router.push({name: 'contacts'});
-    }
-
-    onBeforeUpdate(async() => {
-      data.value =  route.params.id
-        ? await dataSource.findOne(route.params.id as string)
-        : {};
-    });
-
-    return {
-      data,
-      onSaveClick
-    };
-  }
-});
+const onSaving = (data: any) => {
+  data.emails = data.emails.split(',').map((email: string) => email.trim());
+}
 </script>
+

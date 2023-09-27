@@ -7,12 +7,12 @@
             <ion-list-header>Inbox</ion-list-header>
             <ion-note>hi@ionicframework.com</ion-note>
 
-            <ion-menu-toggle auto-hide="false" v-for="(p, i) in appPages" :key="i">
+            <ion-menu-toggle :auto-hide="false" v-for="(p, i) in appPages" :key="i">
               <ion-item
                 router-direction="root"
                 lines="none"
-                detail="false"
                 class="hydrated"
+                :detail="false"
                 :router-link="p.url"
                 :class="{ selected: selectedIndex === i }"
                 @click="selectedIndex = i"
@@ -29,7 +29,11 @@
   </ion-app>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref } from 'vue';
+import { personOutline, bookmarkOutline } from 'ionicons/icons';
+import { Preferences } from '@capacitor/preferences';
+// import { useManager } from './database';
 import {
   IonApp,
   IonContent,
@@ -45,60 +49,35 @@ import {
   IonSplitPane,
   loadingController,
 } from '@ionic/vue';
-import { defineComponent, ref } from 'vue';
-import { useRoute } from 'vue-router';
-import { personOutline } from 'ionicons/icons';
-import { Storage } from '@capacitor/storage';
-import { useManager } from './database';
 
-export default defineComponent({
-  name: 'App',
-  components: {
-    IonApp,
-    IonContent,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonListHeader,
-    IonMenu,
-    IonMenuToggle,
-    IonNote,
-    IonRouterOutlet,
-    IonSplitPane,
+// const manager = useManager();
+
+const selectedIndex = ref(0);
+const appPages = [
+  {
+    title: 'Contacts',
+    url: '/contacts',
+    iosIcon: personOutline,
+    mdIcon: personOutline
   },
-  setup() {
-    const manager = useManager();
-    const route = useRoute();
-    const selectedIndex = ref(0);
-    const appPages = [
-      {
-        title: 'Contacts',
-        url: '/contacts',
-        iosIcon: personOutline,
-        mdIcon: personOutline
-      }
-    ];
-
-    loadingController.create({ message: 'Please wait...'})
-      .then(async(loading) => {
-        await loading.present();
-
-        const { value } = await Storage.get({ key: 'isSyncComplete' });
-        await manager.start(value === null);
-
-        await Storage.set({ key: 'isSyncComplete', value: '1'});
-        await loading.dismiss();
-      });
-
-    return {
-      selectedIndex,
-      appPages,
-      personOutline,
-      isSelected: (url: string) => url === route.path ? 'selected' : ''
-    }
+  {
+    title: 'Categories',
+    url: '/categories',
+    iosIcon: bookmarkOutline,
+    mdIcon: bookmarkOutline
   }
-});
+];
+
+const init =  async () => {
+  const loading = await loadingController.create({ message: 'Please wait...'});
+  // const { value } = await Preferences.get({ key: 'isSyncComplete' });
+
+  // await manager.start(!value);
+  await Preferences.set({ key: 'isSyncComplete', value: '1'});
+  await loading.dismiss();
+}
+
+init();
 </script>
 
 <style scoped>
