@@ -1,7 +1,7 @@
 import { inject, Plugin } from 'vue';
-import { createRxDatabase, addRxPlugin } from 'rxdb';
+import { addRxPlugin, createRxDatabase } from 'rxdb';
+import { getRxStorageIndexedDB } from 'rxdb-premium/plugins/storage-indexeddb';
 import { RxDBLeaderElectionPlugin } from 'rxdb/plugins/leader-election';
-import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { isPlatform } from '@ionic/vue';
 import contactSchema from './schemas/contact';
 import categorySchema from './schemas/category';
@@ -30,7 +30,7 @@ export async function createDatabase(): Promise<Plugin> {
 
   const database = await createRxDatabase({
     name: 'testdb',
-    storage: getRxStorageDexie()
+    storage: getRxStorageIndexedDB()
   });
 
   await database.addCollections({
