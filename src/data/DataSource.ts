@@ -1,18 +1,16 @@
 import { replicateRxCollection, RxReplicationState } from 'rxdb/plugins/replication';
 import { assign, keys, pickBy } from 'lodash';
-import { RxCollection } from 'rxdb';
-import { DateTime } from 'luxon';
+import { lastOfArray, RxCollection,  } from 'rxdb';
 import { v4, validate } from 'uuid';
 
 
 export class DataSource {
 
   _options: any;
-  _currentPage = 1;
   _fieldNames: string[];
   _replicator: RxReplicationState<any, any>;
   _collection: RxCollection;
-  _syncEndTime: DateTime;
+
 
   constructor(collection: RxCollection, options: any) {
     this._options = options || {};
@@ -28,7 +26,10 @@ export class DataSource {
   async findAll(options: any = {}): Promise<any[]> {
     const condition = options.searchValue ? {
       selector: {
-        name: { $regex: new RegExp(`.*${options.searchValue}.*`, 'i') }
+        name: {
+          $regex: `.*${options.searchValue}.*`,
+          $options: 'i'
+        }
       }
     } : {};
 
@@ -42,7 +43,7 @@ export class DataSource {
     });
 
     const results = await query.exec();
-    return results.map(result => this._toPlainObject(result));
+    return results.map((result: any) => this._toPlainObject(result));
   }
 
   async save(key: string, data: any) {
@@ -71,10 +72,7 @@ export class DataSource {
     }
 
     if ((!created || this._replicator.isStopped()) && awaitInit) {
-      this._currentPage = 1;
-      this._syncEndTime = null;
       await this._replicator.awaitInitialReplication();
-      this._syncEndTime = DateTime.now();
     }
   }
 
@@ -101,43 +99,21 @@ export class DataSource {
     }
   }
 
-  async pull(last: any): Promise<any> {
-    const documents = [];
+  async pull(lastCheckpoint: any, batchSize: number): Promise<any> {
     const baseUrl = this._options.baseUrl;
-    const limit = this._options.limit || 100;
-    const batchSize = this._options.batchSize || 1000;
-    const isSync = this.isSyncing();
+    const minTimestamp = lastCheckpoint ? lastCheckpoint.updatedAt : 0;
 
-    let data;
-    let lastUpdateAt = last ? DateTime.fromMillis(last.updatedAt) : null;
-
-    if (this._syncEndTime >= lastUpdateAt) {
-      lastUpdateAt = this._syncEndTime;
-    }
-
-    do {
-      const url = last
-        ? `${baseUrl}?updatedAt_gte=${lastUpdateAt.toMillis()}`
-        : `${baseUrl}?_page=${this._currentPage}&_limit=${limit}`
-
-      const response = await fetch(url);
-      data = await response.json();
-      documents.push(...data);
-
-      if (isSync) {
-        this._currentPage++;
-      }
-
-    } while (documents.length < batchSize && data.length == limit && isSync);
-
+    const response = await fetch(
+        `${baseUrl}/?minUpdatedAt=${minTimestamp}&limit=${batchSize}`
+    );
+    const documentsFromRemote = await response.json() as any[];
     return {
-      documents: documents,
-      hasMoreDocuments: data.length === limit
+        documents: documentsFromRemote,
+        checkpoint: documentsFromRemote.length === 0 ? lastCheckpoint : {
+            id: lastOfArray(documentsFromRemote).id,
+            updatedAt: lastOfArray(documentsFromRemote).updatedAt
+        }
     };
-  }
-
-  isSyncing() {
-    return !this._syncEndTime;
   }
 
   async _createReplicator() {
@@ -148,8 +124,8 @@ export class DataSource {
       replicationIdentifier: this._createReplicationIdentifier(),
       live: true,
       pull: {
-        async handler(lastDoc) {
-          return self.pull(lastDoc);
+        async handler(lastCheckpoint: any, batchSize: number) {
+          return self.pull(lastCheckpoint, batchSize);
         }
       },
       push: {

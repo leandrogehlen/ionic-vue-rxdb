@@ -1,7 +1,7 @@
 {
-  "name": "ionic-offline",
+  "name": "mobile",
   "integrations": {
     "capacitor": {}
   },
-  "type": "vue"
+  "type": "vue-vite"
 }

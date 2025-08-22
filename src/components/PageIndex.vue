@@ -105,20 +105,18 @@ const loadData = async () => {
     }
   } : {};
 
-  const query = props.collection.find({
+  props.collection.find({
     ...condition,
     skip: data.value.length,
     limit: data.value.length,
     sort: [
       { id: 'asc' }
     ],
+  }).$.subscribe((results) => {
+    const items = results.map(result => result.toMutableJSON());
+    count.value = items.length;
+    data.value.push(...items);
   });
-
-  const results = await query.exec();
-  const items = results.map(result => result.toMutableJSON());
-
-  count.value = items.length;
-  data.value.push(...items);
 }
 
 const onSearchInput = () => {

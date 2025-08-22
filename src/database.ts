@@ -5,10 +5,12 @@ import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { isPlatform } from '@ionic/vue';
 import contactSchema from './schemas/contact';
 import categorySchema from './schemas/category';
+import { Manager } from './data/Manager';
 
 addRxPlugin(RxDBLeaderElectionPlugin);
 
-const KEY_DATABASE = Symbol('database');
+const PLUGIN_DATABASE = Symbol('database');
+const PLUGIN_MANAGER = Symbol('manager');
 
 function awaitDeviceIsReady(): Promise<void> {
   return new Promise(resolve => {
@@ -19,8 +21,13 @@ function awaitDeviceIsReady(): Promise<void> {
 }
 
 export function useDatabase(): any {
-  return inject(KEY_DATABASE);
+  return inject(PLUGIN_DATABASE);
 }
+
+export function useManager(): any {
+  return inject(PLUGIN_MANAGER);
+}
+
 
 export async function createDatabase(): Promise<Plugin> {
 
@@ -42,10 +49,15 @@ export async function createDatabase(): Promise<Plugin> {
     }
   });
 
+  const manager = new Manager(database)
+    .add(database.contacts, {
+      baseUrl: 'http://localhost:3000/contacts'
+    });
 
   return {
     install(app: any) {
-      app.provide(KEY_DATABASE, database);
+      app.provide(PLUGIN_DATABASE, database);
+      app.provide(PLUGIN_MANAGER, manager);
     }
   };
 }

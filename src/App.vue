@@ -30,10 +30,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { personOutline, bookmarkOutline } from 'ionicons/icons';
 import { Preferences } from '@capacitor/preferences';
-// import { useManager } from './database';
 import {
   IonApp,
   IonContent,
@@ -49,8 +48,9 @@ import {
   IonSplitPane,
   loadingController,
 } from '@ionic/vue';
+import { useManager } from './database';
 
-// const manager = useManager();
+const manager = useManager();
 
 const selectedIndex = ref(0);
 const appPages = [
@@ -68,16 +68,12 @@ const appPages = [
   }
 ];
 
-const init =  async () => {
+
+onMounted(async () => {
   const loading = await loadingController.create({ message: 'Please wait...'});
-  // const { value } = await Preferences.get({ key: 'isSyncComplete' });
-
-  // await manager.start(!value);
-  await Preferences.set({ key: 'isSyncComplete', value: '1'});
+  await manager.start(true);
   await loading.dismiss();
-}
-
-init();
+});
 </script>
 
 <style scoped>
